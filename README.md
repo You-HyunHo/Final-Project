@@ -49,7 +49,7 @@
 ## 機能画面
 
 <details>
-<summary><b>기능 화면</b></summary>
+<summary><b>機能画面</b></summary>
 <div markdown="1">
 
 ### 1. ユーザーカスタムコース投稿画面
