@@ -82,20 +82,102 @@
 
 ### 1. コース作成機能
 
+```mermaid
+sequenceDiagram
+    autonumber
+    participant FE as Frontend
+    participant BE as CustomService
+    participant DB
+    participant EM as EntityManager
+
+    FE->>BE: コース作成リクエスト (CustomDTO)
+
+    BE->>BE: 初期値設定 (delYn = N)
+
+    loop 場所数分繰り返し
+        BE->>EM: Place取得 (placeId)
+        EM->>DB: SELECT Place
+        DB-->>EM: Place返却
+        EM-->>BE: Placeエンティティ返却
+
+        BE->>BE: CustomPlace生成 (orderIndex設定)
+    end
+
+    BE->>BE: Customエンティティ生成および関連付け
+
+    BE->>DB: Custom保存 (Cascade)
+    DB-->>BE: 保存完了 (cno返却)
+
+    BE-->>FE: cno返却
+```
+
 ユーザーが選択した複数の場所を基に、順序付きのコースを作成する機能です。
 各場所は `orderIndex` を用いて順序を保持し、意図したルート通りに保存されるよう設計しました。
 また、コース（Custom）と場所（Place）の多対多関係を解決するために、中間テーブル（CustomPlace）を導入し、柔軟なデータ構造を実現しました。
 
-### 2. 人気コース取得機能
+### 2. コース詳細取得機能
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant FE as Frontend
+    participant BE as CustomService
+    participant DB
+    participant WL as WishListRepository
+
+    FE->>BE: コース詳細取得リクエスト (cno, userIdx)
+
+    BE->>DB: Custom取得
+    DB-->>BE: Custom返却
+
+    BE->>BE: CustomDTOに変換
+
+    BE->>BE: CustomPlaceをorderIndexでソート
+    BE->>BE: Place → PlaceDTOに変換
+
+    BE->>WL: お気に入り有無の確認
+    WL->>DB: existsクエリ実行
+    DB-->>WL: 結果返却
+    WL-->>BE: true / false
+
+    BE->>BE: DTOにplaces・tags・wishlist設定
+
+    BE-->>FE: CustomDTO返却
+```
+
+コースの詳細情報を取得する際に、関連する場所データを順序通りに整形し、DTOとして返却する機能です。
+さらに、ユーザーごとの「いいね」状態を判定し、個人化された情報としてレスポンスに含めることで、ユーザー体験の向上を図りました。
+
+### 3. 人気コース取得機能
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant FE as Frontend
+    participant BE as WishListService
+    participant DB
+
+    FE->>BE: 人気コースリクエスト (topCount)
+
+    BE->>DB: 人気Custom ID取得（お気に入り基準）
+    DB-->>BE: Custom IDリスト返却
+
+    BE->>DB: Custom＋Placeをまとめて取得
+    DB-->>BE: Customリスト返却
+
+    BE->>BE: ID順で並び替え
+
+    loop 各Customごとに繰り返し
+        BE->>BE: PlaceをorderIndexでソート
+        BE->>BE: DTOに変換
+    end
+
+    BE-->>FE: 人気コースリスト返却
+```
 
 ユーザーの「いいね（WishList）」データを基に、人気のコースを抽出する機能です。
 まず、WishListテーブルから人気コースのIDを取得し、その後コース情報を再取得することで、効率的にデータを構築しました。
 また、取得したIDの順序を維持するために、並び替え処理を行い、ランキング順で表示されるよう工夫しました。
-
-### 3. コース詳細取得機能
-
-コースの詳細情報を取得する際に、関連する場所データを順序通りに整形し、DTOとして返却する機能です。
-さらに、ユーザーごとの「いいね」状態を判定し、個人化された情報としてレスポンスに含めることで、ユーザー体験の向上を図りました。
 
 ## トラブルシューティングおよび解決
 
