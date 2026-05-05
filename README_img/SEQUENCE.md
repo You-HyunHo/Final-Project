@@ -1,243 +1,248 @@
-# 시퀀스 다이어그램
+# Sequence Diagrams
 
-## 코스 생성 (register) 시퀀스
+## コース作成（register）
 ```mermaid
 sequenceDiagram
-autonumber
-participant FE as Frontend
-participant BE as CustomService
-participant DB
-participant WL as WishListRepository
+    autonumber
+    participant FE as Frontend
+    participant BE as CustomService
+    participant DB
+    participant EM as EntityManager
 
-    FE->>BE: 코스 상세 조회 요청 (cno, userIdx)
+    FE->>BE: コース作成リクエスト (CustomDTO)
 
-    BE->>DB: Custom 조회
-    DB-->>BE: Custom 반환
+    BE->>BE: 初期値設定 (delYn = N)
 
-    BE->>BE: CustomDTO 변환
+    loop 場所数分繰り返し
+        BE->>EM: Place取得 (placeId)
+        EM->>DB: SELECT Place
+        DB-->>EM: Place返却
+        EM-->>BE: Placeエンティティ返却
 
-    BE->>BE: CustomPlace 정렬 (orderIndex)
-    BE->>BE: Place → PlaceDTO 변환
-
-    BE->>WL: 위시리스트 여부 조회
-    WL->>DB: exists query
-    DB-->>WL: 결과 반환
-    WL-->>BE: true/false
-
-    BE->>BE: DTO에 places, tags, wishlist 설정
-
-    BE-->>FE: CustomDTO 반환
-```
-
-## 코스 상세 조회 (get)
-```mermaid
-sequenceDiagram
-autonumber
-participant FE as Frontend
-participant BE as CustomService
-participant DB
-participant WL as WishListRepository
-
-    FE->>BE: 코스 상세 조회 요청 (cno, userIdx)
-
-    BE->>DB: Custom 조회
-    DB-->>BE: Custom 반환
-
-    BE->>BE: CustomDTO 변환
-
-    BE->>BE: CustomPlace 정렬 (orderIndex)
-    BE->>BE: Place → PlaceDTO 변환
-
-    BE->>WL: 위시리스트 여부 조회
-    WL->>DB: exists query
-    DB-->>WL: 결과 반환
-    WL-->>BE: true/false
-
-    BE->>BE: DTO에 places, tags, wishlist 설정
-
-    BE-->>FE: CustomDTO 반환
-```
-## 리스트 조회 (무한 스크롤 포함)
-```mermaid
-sequenceDiagram
-autonumber
-participant FE as Frontend
-participant BE as CustomService
-participant DB
-participant WL as WishListRepository
-
-    FE->>BE: 코스 리스트 요청 (scrollPaging, pageable)
-
-    BE->>DB: 스크롤 페이징 조회
-    DB-->>BE: Custom 리스트 반환
-
-    loop 각 Custom 반복
-        BE->>BE: DTO 변환
-        BE->>BE: 장소 정렬 (orderIndex)
-        BE->>BE: PlaceDTO 변환
-
-        BE->>WL: 위시리스트 여부 확인
-        WL->>DB: exists query
-        DB-->>WL: 결과 반환
-        WL-->>BE: true/false
+        BE->>BE: CustomPlace生成 (orderIndex設定)
     end
 
-    BE->>BE: hasNext 계산
+    BE->>BE: Customエンティティ生成および関連付け
 
-    BE-->>FE: CustomResponseDTO 반환
+    BE->>DB: Custom保存 (Cascade)
+    DB-->>BE: 保存完了 (cno返却)
+
+    BE-->>FE: cno返却
 ```
-## 업데이트 흐름
+
+## コース詳細取得（get）
 ```mermaid
 sequenceDiagram
-autonumber
-participant FE as Frontend
-participant BE as CustomService
-participant DB
+    autonumber
+    participant FE as Frontend
+    participant BE as CustomService
+    participant DB
+    participant WL as WishListRepository
 
-    FE->>BE: 코스 수정 요청 (cno, CustomDTO)
+    FE->>BE: コース詳細取得リクエスト (cno, userIdx)
 
-    BE->>DB: 기존 Custom 조회
-    DB-->>BE: Custom 반환
+    BE->>DB: Custom取得
+    DB-->>BE: Custom返却
 
-    BE->>BE: 기본 정보 수정 (title, desc, tags)
+    BE->>BE: CustomDTOに変換
 
-    BE->>BE: 기존 CustomPlaces 제거
+    BE->>BE: CustomPlaceをorderIndexでソート
+    BE->>BE: Place → PlaceDTOに変換
 
-    loop 장소 재생성
-        BE->>BE: CustomPlace 생성 (orderIndex 포함)
+    BE->>WL: お気に入り有無の確認
+    WL->>DB: existsクエリ実行
+    DB-->>WL: 結果返却
+    WL-->>BE: true / false
+
+    BE->>BE: DTOにplaces・tags・wishlist設定
+
+    BE-->>FE: CustomDTO返却
+```
+## コース一覧取得
+```mermaid
+sequenceDiagram
+    autonumber
+    participant FE as Frontend
+    participant BE as CustomService
+    participant DB
+    participant WL as WishListRepository
+
+    FE->>BE: コース一覧リクエスト (scrollPaging, pageable)
+
+    BE->>DB: スクロールベースのページング取得
+    DB-->>BE: Customリスト返却
+
+    loop 各Customごとに繰り返し
+        BE->>BE: DTOに変換
+        BE->>BE: 場所をorderIndexでソート
+        BE->>BE: PlaceDTOに変換
+
+        BE->>WL: お気に入り有無の確認
+        WL->>DB: existsクエリ実行
+        DB-->>WL: 結果返却
+        WL-->>BE: true / false
     end
 
-    BE->>DB: 저장
-    DB-->>BE: 완료
+    BE->>BE: hasNext計算
 
-    BE-->>FE: 완료 응답
+    BE-->>FE: CustomResponseDTO返却
 ```
-## 장소 검색 (searchPlaces)
+## コース編集（update）
 ```mermaid
 sequenceDiagram
-autonumber
-participant FE as Frontend
-participant BE as PlaceService
-participant DB
+    autonumber
+    participant FE as Frontend
+    participant BE as CustomService
+    participant DB
 
-    FE->>BE: 장소 검색 요청 (address, name)
+    FE->>BE: コース編集リクエスト (cno, CustomDTO)
 
-    alt address 없음 && name 없음
-        BE->>DB: 전체 조회 (findAll)
-    else address + name 모두 있음
-        BE->>DB: 주소 + 이름 검색
-    else address만 있음
-        BE->>DB: 주소 기준 검색
-    else name만 있음
-        BE->>DB: 이름 기준 검색
+    BE->>DB: 既存Custom取得
+    DB-->>BE: Custom返却
+
+    BE->>BE: 基本情報更新 (title, description, tags)
+
+    BE->>BE: 既存CustomPlaces削除
+
+    loop 場所を再生成
+        BE->>BE: CustomPlace生成 (orderIndex含む)
     end
 
-    DB-->>BE: Place 리스트 반환
+    BE->>DB: 保存
+    DB-->>BE: 完了
 
-    BE->>BE: Place → PlaceDTO 변환
-
-    BE-->>FE: PlaceDTO 리스트 반환
+    BE-->>FE: 完了レスポンス
 ```
-## 찜 추가 (addWishList)
+## 場所検索 (searchPlaces)
 ```mermaid
 sequenceDiagram
-autonumber
-participant FE as Frontend
-participant BE as WishListService
-participant DB
+    autonumber
+    participant FE as Frontend
+    participant BE as PlaceService
+    participant DB
 
-    FE->>BE: 찜 추가 요청 (userIdx, customCno)
+    FE->>BE: 場所検索リクエスト (address, name)
 
-    BE->>DB: 중복 여부 확인
-    DB-->>BE: exists 여부 반환
-
-    alt 이미 존재함
-        BE-->>FE: 예외 발생 (중복)
-    else 없음
-        BE->>BE: WishList 엔티티 생성
-        BE->>DB: 저장
-        DB-->>BE: 저장 완료
-        BE-->>FE: 성공 응답
-    end
-```
-## 찜 삭제 (removeWishList)
-```mermaid
-sequenceDiagram
-autonumber
-participant FE as Frontend
-participant BE as WishListService
-participant DB
-
-    FE->>BE: 찜 삭제 요청 (userIdx, customCno)
-
-    BE->>DB: 해당 데이터 삭제
-    DB-->>BE: 완료
-
-    BE-->>FE: 성공 응답
-```
-## 내 찜 목록 조회 (getFavoritesByUser)
-```mermaid
-sequenceDiagram
-autonumber
-participant FE as Frontend
-participant BE as WishListService
-participant DB
-
-    FE->>BE: 찜 목록 조회 (pageSize)
-
-    BE->>DB: 페이징 조회 (정렬 포함)
-    DB-->>BE: WishList 리스트 반환
-
-    BE->>BE: DTO 변환
-
-    BE->>BE: hasNext 계산
-
-    BE-->>FE: WishListDTO 반환
-```
-## 인기 코스 조회 (listPopular)
-```mermaid
-sequenceDiagram
-autonumber
-participant FE as Frontend
-participant BE as WishListService
-participant DB
-
-    FE->>BE: 인기 코스 요청 (topCount)
-
-    BE->>DB: 인기 Custom ID 조회 (찜 기준)
-    DB-->>BE: Custom ID 리스트
-
-    BE->>DB: Custom + Place 함께 조회
-    DB-->>BE: Custom 리스트 반환
-
-    BE->>BE: ID 순서 기준 정렬
-
-    loop 각 Custom
-        BE->>BE: Place 정렬 (orderIndex)
-        BE->>BE: DTO 변환
+    alt addressなし && nameなし
+        BE->>DB: 全件取得 (findAll)
+    else addressとnameの両方あり
+        BE->>DB: 住所＋名前で検索
+    else addressのみあり
+        BE->>DB: 住所で検索
+    else nameのみあり
+        BE->>DB: 名前で検索
     end
 
-    BE-->>FE: 인기 코스 리스트 반환
+    DB-->>BE: Placeリスト返却
+
+    BE->>BE: Place → PlaceDTOに変換
+
+    BE-->>FE: PlaceDTOリスト返却
 ```
-## 전체 인기 + 사용자 상태 (listPopularAll)
+## お気に入り追加（addWishList）
 ```mermaid
 sequenceDiagram
-autonumber
-participant FE as Frontend
-participant BE as WishListService
-participant DB
+    autonumber
+    participant FE as Frontend
+    participant BE as WishListService
+    participant DB
 
-    FE->>BE: 인기 전체 조회 (userIdx)
+    FE->>BE: お気に入り追加リクエスト (userIdx, customCno)
 
-    BE->>DB: Custom 리스트 조회
-    DB-->>BE: Custom 리스트 반환
+    BE->>DB: 重複有無の確認
+    DB-->>BE: exists結果返却
 
-    loop 각 Custom
-        BE->>BE: Place 정렬 및 DTO 변환
+    alt 既に存在する場合
+        BE-->>FE: 例外発生（重複）
+    else 存在しない場合
+        BE->>BE: WishListエンティティ生成
+        BE->>DB: 保存
+        DB-->>BE: 保存完了
+        BE-->>FE: 成功レスポンス
+    end
+```
 
-        BE->>DB: 찜 여부 확인
-        DB-->>BE: true/false
+## お気に入り削除（removeWishList）
+```mermaid
+sequenceDiagram
+    autonumber
+    participant FE as Frontend
+    participant BE as WishListService
+    participant DB
+
+    FE->>BE: お気に入り削除リクエスト (userIdx, customCno)
+
+    BE->>DB: 対象データ削除
+    DB-->>BE: 完了
+
+    BE-->>FE: 成功レスポンス
+```
+
+## お気に入り一覧取得（getFavoritesByUser）
+```mermaid
+sequenceDiagram
+    autonumber
+    participant FE as Frontend
+    participant BE as WishListService
+    participant DB
+
+    FE->>BE: お気に入り一覧取得リクエスト (pageSize)
+
+    BE->>DB: ページング取得（ソート含む）
+    DB-->>BE: WishListリスト返却
+
+    BE->>BE: DTOに変換
+
+    BE->>BE: hasNext計算
+
+    BE-->>FE: WishListDTO返却
+```
+
+## 人気コース取得（listPopular
+```mermaid
+sequenceDiagram
+    autonumber
+    participant FE as Frontend
+    participant BE as WishListService
+    participant DB
+
+    FE->>BE: 人気コースリクエスト (topCount)
+
+    BE->>DB: 人気Custom ID取得（お気に入り基準）
+    DB-->>BE: Custom IDリスト返却
+
+    BE->>DB: Custom＋Placeをまとめて取得
+    DB-->>BE: Customリスト返却
+
+    BE->>BE: ID順で並び替え
+
+    loop 各Customごとに繰り返し
+        BE->>BE: PlaceをorderIndexでソート
+        BE->>BE: DTOに変換
     end
 
-    BE-->>FE: CustomDTO 리스트 반환
+    BE-->>FE: 人気コースリスト返却
+```
+
+## 人気コース全体取得（listPopularAll）
+```mermaid
+sequenceDiagram
+    autonumber
+    participant FE as Frontend
+    participant BE as WishListService
+    participant DB
+
+    FE->>BE: 人気コース全体取得リクエスト (userIdx)
+
+    BE->>DB: Customリスト取得
+    DB-->>BE: Customリスト返却
+
+    loop 各Customごとに繰り返し
+        BE->>BE: PlaceをソートおよびDTOに変換
+
+        BE->>DB: お気に入り有無の確認
+        DB-->>BE: true / false
+    end
+
+    BE-->>FE: CustomDTOリスト返却
 ```
