@@ -198,7 +198,7 @@ sequenceDiagram
     BE-->>FE: WishListDTO返却
 ```
 
-## 人気コース取得（listPopular
+## 人気コース取得（listPopular)
 ```mermaid
 sequenceDiagram
     autonumber
