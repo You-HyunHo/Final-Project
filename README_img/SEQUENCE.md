@@ -1,7 +1,7 @@
 # 시퀀스 다이어그램
 
 ## 코스 생성 (register) 시퀀스
-
+```mermaid
 sequenceDiagram
 autonumber
 participant FE as Frontend
@@ -27,9 +27,10 @@ participant WL as WishListRepository
     BE->>BE: DTO에 places, tags, wishlist 설정
 
     BE-->>FE: CustomDTO 반환
+```
 
 ## 코스 상세 조회 (get)
-
+```mermaid
 sequenceDiagram
 autonumber
 participant FE as Frontend
@@ -55,9 +56,9 @@ participant WL as WishListRepository
     BE->>BE: DTO에 places, tags, wishlist 설정
 
     BE-->>FE: CustomDTO 반환
-
+```
 ## 리스트 조회 (무한 스크롤 포함)
-
+```mermaid
 sequenceDiagram
 autonumber
 participant FE as Frontend
@@ -84,9 +85,9 @@ participant WL as WishListRepository
     BE->>BE: hasNext 계산
 
     BE-->>FE: CustomResponseDTO 반환
-
+```
 ## 업데이트 흐름
-
+```mermaid
 sequenceDiagram
 autonumber
 participant FE as Frontend
@@ -110,9 +111,9 @@ participant DB
     DB-->>BE: 완료
 
     BE-->>FE: 완료 응답
-
+```
 ## 장소 검색 (searchPlaces)
-
+```mermaid
 sequenceDiagram
 autonumber
 participant FE as Frontend
@@ -136,9 +137,9 @@ participant DB
     BE->>BE: Place → PlaceDTO 변환
 
     BE-->>FE: PlaceDTO 리스트 반환
-
+```
 ## 찜 추가 (addWishList)
-
+```mermaid
 sequenceDiagram
 autonumber
 participant FE as Frontend
@@ -158,9 +159,9 @@ participant DB
         DB-->>BE: 저장 완료
         BE-->>FE: 성공 응답
     end
-
+```
 ## 찜 삭제 (removeWishList)
-
+```mermaid
 sequenceDiagram
 autonumber
 participant FE as Frontend
@@ -173,9 +174,9 @@ participant DB
     DB-->>BE: 완료
 
     BE-->>FE: 성공 응답
-
+```
 ## 내 찜 목록 조회 (getFavoritesByUser)
-
+```mermaid
 sequenceDiagram
 autonumber
 participant FE as Frontend
@@ -192,9 +193,9 @@ participant DB
     BE->>BE: hasNext 계산
 
     BE-->>FE: WishListDTO 반환
-
+```
 ## 인기 코스 조회 (listPopular)
-
+```mermaid
 sequenceDiagram
 autonumber
 participant FE as Frontend
@@ -217,9 +218,9 @@ participant DB
     end
 
     BE-->>FE: 인기 코스 리스트 반환
-
+```
 ## 전체 인기 + 사용자 상태 (listPopularAll)
-
+```mermaid
 sequenceDiagram
 autonumber
 participant FE as Frontend
@@ -239,3 +240,4 @@ participant DB
     end
 
     BE-->>FE: CustomDTO 리스트 반환
+```
